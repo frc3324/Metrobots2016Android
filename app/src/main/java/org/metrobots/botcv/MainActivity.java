@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.metrobots.botcv.communication.CommImpl;
@@ -14,6 +15,7 @@ import org.metrobots.botcv.cv.BotCameraView;
 import org.metrobots.botcv.cv.CameraInterface;
 import org.metrobots.botcv.cv.LimiterSlider;
 import org.metrobots.botcv.peripheral.PeripheralManager;
+import org.w3c.dom.Text;
 
 public class MainActivity extends AppCompatActivity {
     @SuppressWarnings("FieldCanBeLocal")
@@ -34,10 +36,21 @@ public class MainActivity extends AppCompatActivity {
         initSliders();
         peripheralManager = new PeripheralManager(this);
 
-        cameraView = (BotCameraView) findViewById(R.id.cameraView);
-        cameraView.setVisibility(SurfaceView.VISIBLE);
-        cameraView.setCvCameraViewListener(cameraInterface);
-        cameraView.enableView();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                TextView gyroView = (TextView) findViewById(R.id.gyroText);
+                while (true) {
+                    float[] angles = peripheralManager.getGyro().getAngle(true);
+                    StringBuilder sb = new StringBuilder();
+
+                    for (float angle : angles) {
+                        sb.append(angle).append("deg.; ");
+                    }
+                    gyroView.setText(sb.toString());
+                }
+            }
+        }).start();
 
         try {
             new CommServer(new CommImpl(this)).start(5800);
